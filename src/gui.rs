@@ -50,8 +50,16 @@ pub struct MyApp {
 impl Default for MyApp {
     fn default() -> Self {
         MyApp {
+            //dove il check box tutti ???c
             checkbox_tutti: false,
-            cartelle_selezionate: vec![], // Stato delle checkbox (se selezionate o meno)
+
+            //creo il vettore delle cartelle
+            cartelle_selezionate: vec![
+                PathSelezionabile::new("path_2008",false),
+                PathSelezionabile::new("path_2009",false),
+                PathSelezionabile::new("path_2010",false),
+            ], // Stato delle checkbox (se selezionate o meno)
+
             path_base: "".to_string(),
             path_recenti: vec![PathSelezionabile::new("recent1", true), PathSelezionabile::new("recenti2", false)],
             path_file_inclusi: "".to_string(),
@@ -161,7 +169,26 @@ impl App for MyApp {
                 ui.button("Scegli cartella");
             });
 
+            let mut i = 0;
+            for mut my_bool in self.cartelle_selezionate.iter_mut().map(|ps| ps.selezionato) {
+                //assegno alla variabile il nome della cartella costruita +1
+                let my_cartella = format!("{}", 2008 + i);
 
+
+                ui.horizontal(|ui| {
+                    //assegno alla checkbox il valore bool + il nome costruito
+                    let checkbox = ui.checkbox(&mut my_bool, &my_cartella);
+                    //evento click checkbox
+                    if checkbox.clicked() {
+                        //stampo il nome ed il valore della check box cliccata.
+                        println!("Checkbox con indice {i} clicked, nome = {}", &my_cartella);
+                    }
+
+                    ui.label("2008 prova");
+                });
+
+                i += 1;
+            }
 
             // TODO: crea un for per le check box e che riportano il nome dell cartelle nelle label
             let bar = egui::ProgressBar::new(0.6).rounding(0.0);
