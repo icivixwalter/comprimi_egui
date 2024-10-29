@@ -13,8 +13,8 @@ LE OPERAZIONI PRELIMINARI:
             4 CENTRAL PANEL
                 attenzione il central panel deve essere creato sempre per ultimo come
                 previsto da egui
-    @01_LAYOUT_egui::SidePanel::right = per prima cosa creo il panello sinistro
-    @02_LAYOUT_egui::SidePanel::right = per prima cosa creo il panello sinistro
+    @01_LAYOUT_egui::SidePanel::left = per prima cosa creo il panello sinistro
+    @02_LAYOUT_egui::SidePanel::right = per prima cosa creo il panello destro
 
 
 ***************************************************************************************
@@ -50,7 +50,7 @@ pub struct MyApp {
 impl Default for MyApp {
     fn default() -> Self {
         MyApp {
-            //dove il check box tutti ???c
+            //dove il check box tutti ???
             checkbox_tutti: false,
 
             //creo il vettore delle cartelle
@@ -65,6 +65,7 @@ impl Default for MyApp {
             path_file_inclusi: "".to_string(),
             elenco_inclusi: vec!["prova".to_string(), "prova2".to_string()],
             radio_file_recenti: vec![false],
+            //theme
             theme_preference: ThemePreference::Light,
             system_theme: Some(Theme::Dark),
             fallback_theme: Theme::Dark,
@@ -97,7 +98,7 @@ impl App for MyApp {
     fn update(&mut self, ctx: &Context, frame: &mut Frame) {
         let theme = self.theme();
 
-        //CAMBIA IL COLORE DELLA FORM
+        //CAMBIA IL COLORE DELLA FORM BASE e da scegliere
         ctx.set_style(match theme {
             Theme::Dark => self.dark_style.clone(),
             Theme::Light => self.light_style.clone(),
@@ -107,7 +108,7 @@ impl App for MyApp {
             self.theme_preference.radio_buttons(ui);
         });
 
-
+        //@02_LAYOUT_egui::SidePanel::right = per prima cosa creo il panello destro
         egui::SidePanel::left("pannello_percorsi_inclusi").show(ctx, |ui| {
             ui.heading("PERCORSI INCLUSI");
             for percorso_incluso in self.elenco_inclusi.iter() {
@@ -115,7 +116,7 @@ impl App for MyApp {
             }
         });
 
-        /*@01_LAYOUT_egui::SidePanel::right = per prima cosa creo il panello sinistro
+        /*@02_LAYOUT_egui::SidePanel::right = per prima cosa creo il panello destro
                 IMPOSTO LA LABE ELENCO RECENTI per i due radio button + un button
         */
         //--------------------------------------------------------------------------------------//
@@ -141,6 +142,7 @@ impl App for MyApp {
             }
         });
         //--------------------------------------------------------------------------------------//
+
 
 
         //in basso pannello
