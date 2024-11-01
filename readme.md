@@ -14,6 +14,9 @@ questo ordine :
 2) secondo creare il layout con la divisione dello schermo
 3) creare i widget
 
+STATO FUTURI WIDGET
+    lo stato dei futuri widget 
+
 ```shell
 cargo run
 ```

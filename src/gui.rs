@@ -1,3 +1,5 @@
+use std::sync::Arc;
+use eframe::{App, Frame};
 /*
 ***************************************************************************************
 @nuova@procedura_(parto dal Layout, poi scrivo i widget, poi creo lo stato di MyApp)
@@ -13,15 +15,18 @@ LE OPERAZIONI PRELIMINARI:
             4 CENTRAL PANEL
                 attenzione il central panel deve essere creato sempre per ultimo come
                 previsto da egui
-    @01_LAYOUT_egui::SidePanel::left = per prima cosa creo il panello sinistro
-    @02_LAYOUT_egui::SidePanel::right = per prima cosa creo il panello destro
+    @01_LAYOUT_PANNELLO_SINISTRO:egui::SidePanel::left = per prima cosa creo il panello sinistro
+    @02_LAYOUT_PANNELLO_DESTRO:egui::SidePanel::right = per prima cosa creo il panello destro
+    @03_LAYOUT_PANNELLO_BASSO::egui::TopBottomPanel::bottom = TOP PANEL è il pannello basso
+        Pannello basso + una Label + una casella di testo
 
 
 ***************************************************************************************
+
+***************************************************************************************
 */
-use std::sync::Arc;
-use eframe::{App, Frame};
 use egui::{Context, Style, Theme, ThemePreference, Visuals, Widget};
+use egui::UiKind::ScrollArea;
 use egui::WidgetType::TextEdit;
 
 // #[derive(Default)]
@@ -55,17 +60,20 @@ impl Default for MyApp {
 
             //creo il vettore delle cartelle
             cartelle_selezionate: vec![
-                PathSelezionabile::new("path_2008",false),
-                PathSelezionabile::new("path_2009",false),
-                PathSelezionabile::new("path_2010",false),
+                PathSelezionabile::new("path_2008", false),
+                PathSelezionabile::new("path_2009", false),
+                PathSelezionabile::new("path_2010", false),
             ], // Stato delle checkbox (se selezionate o meno)
 
             path_base: "".to_string(),
             path_recenti: vec![PathSelezionabile::new("recent1", true), PathSelezionabile::new("recenti2", false)],
             path_file_inclusi: "".to_string(),
+
+            //i due vettori elenco inclusi + radio impostati a false
             elenco_inclusi: vec!["prova".to_string(), "prova2".to_string()],
             radio_file_recenti: vec![false],
-            //theme
+
+            //theme = 1) colore default Light + 2) colore Dark 3) system  = non funzionante.
             theme_preference: ThemePreference::Light,
             system_theme: Some(Theme::Dark),
             fallback_theme: Theme::Dark,
@@ -75,14 +83,9 @@ impl Default for MyApp {
     }
 }
 
-#[derive(Clone)]
-pub struct PathSelezionabile {
-    selezionato: bool,
-    path: String,
-}
 
 impl MyApp {
-    fn theme (& self) -> Theme {
+    fn theme(&self) -> Theme {
         //scelta tema
         match self.theme_preference {
             ThemePreference::Dark => Theme::Dark,
@@ -94,7 +97,6 @@ impl MyApp {
 
 
 impl App for MyApp {
-
     fn update(&mut self, ctx: &Context, frame: &mut Frame) {
         let theme = self.theme();
 
@@ -103,12 +105,13 @@ impl App for MyApp {
             Theme::Dark => self.dark_style.clone(),
             Theme::Light => self.light_style.clone(),
         });
-
+        //PANNELLO SUPERIORE
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             self.theme_preference.radio_buttons(ui);
         });
 
-        //@02_LAYOUT_egui::SidePanel::right = per prima cosa creo il panello destro
+
+        //@01_LAYOUT_PANNELLO_SINISTRO:egui::SidePanel::left = per prima cosa creo il panello sinistro
         egui::SidePanel::left("pannello_percorsi_inclusi").show(ctx, |ui| {
             ui.heading("PERCORSI INCLUSI");
             for percorso_incluso in self.elenco_inclusi.iter() {
@@ -116,10 +119,9 @@ impl App for MyApp {
             }
         });
 
-        /*@02_LAYOUT_egui::SidePanel::right = per prima cosa creo il panello destro
-                IMPOSTO LA LABE ELENCO RECENTI per i due radio button + un button
-        */
-        //--------------------------------------------------------------------------------------//
+
+        //@02_LAYOUT_PANNELLO_DESTRO:egui::SidePanel::right = per prima cosa creo il panello destro
+        // --------------------------------------------------------------------------------------//
         egui::SidePanel::right("pannello_recenti").show(ctx, |ui| {
             ui.heading("RECENTI");
 
@@ -144,59 +146,105 @@ impl App for MyApp {
         //--------------------------------------------------------------------------------------//
 
 
-
-        //in basso pannello
-        //--------------------------------------------------------------------------------------//
+        //@03_LAYOUT_PANNELLO_BASSOegui::TopBottomPanel::bottom = TOP PANEL è il pannello basso
+        //------------------------------------------------------------------------------------------------//
         egui::TopBottomPanel::bottom("pannello_inclusioni").show(ctx, |ui| {
+
+
+
+            // LA BARRA DI PROGRESSIONE
+            //....................................................................................//
+            let cartelle_totali= self.cartelle_selezionate.len();  //prende la lunghezza del vettore
+            let cartelle_completate= 0;
+            let bar = egui::ProgressBar::new((cartelle_completate / cartelle_totali) as f32).rounding(0.0).show_percentage().text(format!("{cartelle_completate}/{cartelle_totali}"));
+            ui.add(bar);
+            //....................................................................................//
+
             ui.vertical_centered(|ui| {
                 ui.heading("INCLUSIONI");
             });
-
+            //Pannello basso + una Label + una casella di testo
             ui.label("File path esclusioni:");
             let text_edit = egui::TextEdit::singleline(&mut self.path_file_inclusi).interactive(false);
             ui.add(text_edit);
 
             ui.button("Scegli file");
         });
-        //--------------------------------------------------------------------------------------//
+        //------------------------------------------------------------------------------------------------//
 
-
+        //PANNELLO CENTRALE per ultimo
+        //------------------------------------------------------------------------------------------------//
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("COMPRESSIONI PATH");
 
-            //Creare una input text disabilitata  + pulsante scegli cartella (INSERITE IN UNA RIGA ORIZZONTALE)
+            //Creare una input text disabilitata  + pulsante scegli
+            // cartella (INSERITE IN UNA RIGA ORIZZONTALE)
             ui.horizontal(|ui| {
                 let text_edit = egui::TextEdit::singleline(&mut self.path_base).desired_width(250.0).hint_text("Scegli la cartella da lavorare").interactive(false);
                 ui.add(text_edit);
                 ui.button("Scegli cartella");
             });
 
-            let mut i = 0;
-            for mut my_bool in self.cartelle_selezionate.iter_mut().map(|ps| ps.selezionato) {
-                //assegno alla variabile il nome della cartella costruita +1
-                let my_cartella = format!("{}", 2008 + i);
+            //CREO LE CHECK BOX
+            //....................................................................................//
+            //scrolla le pagine
+            egui::scroll_area::ScrollArea::vertical().show(ui, |ui| {
+
+                //ciclo per costruire i checkbox cartelle + evento selezionato checkbox
+                let mut i = 0;
+                for mut my_bool in self.cartelle_selezionate.iter_mut().map(|ps| ps.selezionato) {
+                    //assegno alla variabile il nome della cartella costruita +1
+                    let my_cartella = format!("{}", 2008 + i);
 
 
-                ui.horizontal(|ui| {
-                    //assegno alla checkbox il valore bool + il nome costruito
-                    let checkbox = ui.checkbox(&mut my_bool, &my_cartella);
-                    //evento click checkbox
-                    if checkbox.clicked() {
-                        //stampo il nome ed il valore della check box cliccata.
-                        println!("Checkbox con indice {i} clicked, nome = {}", &my_cartella);
-                    }
+                    ui.horizontal(|ui| {
+                        //assegno alla checkbox il valore bool + il nome costruito
+                        let checkbox = ui.checkbox(&mut my_bool, &my_cartella);
 
-                    ui.label("2008 prova");
-                });
+                        //evento click checkbox
+                        if checkbox.clicked() {
+                            //stampo il nome ed il valore della check box cliccata.
+                            println!("Checkbox con indice {i} clicked, nome = {}", &my_cartella);
+                        }
 
-                i += 1;
-            }
+                        ui.label("2008 prova");
+                        //aggiugno spazio
+
+                    });
+
+                    i += 1;
+                } //for mut my_bool
+                //....................................................................................//
+            });
+
+            //tutto lo spazio disponibile in altezza  -10
+            //ui.add_space(ui.available_height() - 60.0);
+
+            //3 button
+            //....................................................................................//
+            ui.add_space(10.0);
+
+            ui.horizontal(|ui| {
+                ui.button("Comprimi Selezionati");
+                ui.button("Comprimi tutto");
+                ui.button("Esci");
+            });
+            //....................................................................................//
 
             // TODO: crea un for per le check box e che riportano il nome dell cartelle nelle label
-            let bar = egui::ProgressBar::new(0.6).rounding(0.0);
-            ui.add(bar);
-        });
+        }); //egui::CentralPanel
+        //------------------------------------------------------------------------------------------------//
+
     }
+}
+
+
+//CREA LA PATH SELEZIONABILE
+//------------------------------------------------------------------------------------------------//
+#[derive(Clone)]
+pub struct PathSelezionabile {
+    selezionato: bool,
+    path: String,
 }
 
 impl PathSelezionabile {
@@ -215,3 +263,5 @@ impl PathSelezionabile {
         self.path.clone()
     }
 }
+
+//------------------------------------------------------------------------------------------------//
