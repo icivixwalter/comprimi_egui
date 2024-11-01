@@ -28,6 +28,7 @@ LE OPERAZIONI PRELIMINARI:
 use egui::{Context, Style, Theme, ThemePreference, Visuals, Widget};
 use egui::UiKind::ScrollArea;
 use egui::WidgetType::TextEdit;
+use crate::file_dialog::scegli_cartella;
 
 // #[derive(Default)]
 pub struct MyApp {
@@ -180,9 +181,16 @@ impl App for MyApp {
             //Creare una input text disabilitata  + pulsante scegli
             // cartella (INSERITE IN UNA RIGA ORIZZONTALE)
             ui.horizontal(|ui| {
-                let text_edit = egui::TextEdit::singleline(&mut self.path_base).desired_width(250.0).hint_text("Scegli la cartella da lavorare").interactive(false);
+                let text_edit = egui::TextEdit::singleline(&mut self.path_base).clip_text(false).hint_text("Scegli la cartella da lavorare").interactive(false);
                 ui.add(text_edit);
-                ui.button("Scegli cartella");
+
+
+                if ui.button("Scegli cartella").clicked(){
+                    if let Some(cartella) = scegli_cartella() {
+                        self.path_base = cartella;
+                    }
+
+                }
             });
 
             //CREO LE CHECK BOX

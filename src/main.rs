@@ -1,4 +1,5 @@
 mod gui;
+mod file_dialog;
 
 use crate::gui::MyApp;
 use eframe::egui;
