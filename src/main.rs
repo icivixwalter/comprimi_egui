@@ -9,7 +9,7 @@ use eframe::egui;
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
         //@finestra@base@windosw_(crea la finestra base di larghezza e altezza predefiniti)
-        viewport: egui::ViewportBuilder::default().with_inner_size([620.0, 320.0]), //larghezza+ altezza
+        viewport: egui::ViewportBuilder::default().with_inner_size([820.0, 320.0]), //larghezza+ altezza
         ..Default::default()
     };
     // attiva il ciclo di rendering e agni iterazione del ciclo chiama il metodo App::update()
