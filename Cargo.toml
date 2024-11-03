@@ -9,3 +9,4 @@ egui = "^0.29.1"    # Assicurati che la versione di egui sia la stessa di eframe
 
 #crate per la gestione delle finestre scegli file
 rfd = "0.15.0"
+anyhow = "1.0.92"

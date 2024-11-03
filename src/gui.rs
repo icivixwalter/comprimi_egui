@@ -1,3 +1,4 @@
+use std::process::exit;
 use std::sync::Arc;
 use eframe::{App, Frame};
 /*
@@ -30,7 +31,7 @@ LE OPERAZIONI PRELIMINARI:
 use egui::{Context, Style, Theme, ThemePreference, Visuals, Widget};
 use egui::UiKind::ScrollArea;
 use egui::WidgetType::TextEdit;
-use crate::file_dialog::{scegli_cartella_pfn, scegli_file_pfn};
+use crate::file_dialog::{leggi_sottocartelle, scegli_cartella_pfn, scegli_file_pfn};
 
 // #[derive(Default)]
 pub struct MyApp {
@@ -62,11 +63,7 @@ impl Default for MyApp {
          checkbox_tutti: false,
 
          //creo il vettore delle cartelle
-         cartelle_selezionate: vec![
-            PathSelezionabile::new("path_2008", false),
-            PathSelezionabile::new("path_2009", false),
-            PathSelezionabile::new("path_2010", false),
-         ], // Stato delle checkbox (se selezionate o meno)
+         cartelle_selezionate: vec![], // Stato delle checkbox (se selezionate o meno)
 
          path_base: "".to_string(),
          path_recenti: vec![PathSelezionabile::new("recent1", true), PathSelezionabile::new("recenti2", false)],
@@ -168,7 +165,13 @@ impl App for MyApp {
          //....................................................................................//
          let cartelle_totali = self.cartelle_selezionate.len();  //prende la lunghezza del vettore
          let cartelle_completate = 0;
-         let bar = egui::ProgressBar::new((cartelle_completate / cartelle_totali) as f32).rounding(0.0).show_percentage().text(format!("{cartelle_completate}/{cartelle_totali}"));
+         let progress = if cartelle_totali == 0 {
+            0.0 as f32
+         } else {
+            (cartelle_completate / cartelle_totali) as f32
+         };
+
+         let bar = egui::ProgressBar::new(progress).rounding(0.0).show_percentage().text(format!("{cartelle_completate}/{cartelle_totali}"));
          ui.add(bar);
          //....................................................................................//
 
@@ -191,18 +194,13 @@ impl App for MyApp {
 
             //BUTTON SCELTA DEL FILE
             //@SCEGLI@FILE = con l'event click button inserisci il file scelto nella casella di testo
-            if ui.button("Scegli FILE").clicked(){
+            if ui.button("Scegli FILE").clicked() {
                if let Some(file) = scegli_file_pfn() {
-                  //TODO: qui non si chiama path base come si chiama la casella di testo scegli file ??
+                  //qui chiama path dei file da includere
                   self.path_file_inclusi = file;
                }
-
             }
-
-
          });
-
-
 
 
          //....................................................................................//
@@ -230,6 +228,14 @@ impl App for MyApp {
             if ui.button("Scegli cartella").clicked() {
                if let Some(cartella) = scegli_cartella_pfn() {
                   self.path_base = cartella;
+
+                  //CHIAMO LA FUNZIONE di lettura delle sottocartelle
+                  if let Ok(vettore_di_sottocartelle) = leggi_sottocartelle(&self.path_base) {
+                     /* conveto il vettore di stringhe sottocartelle in un vettore di PathSelezionabile */
+                     self.cartelle_selezionate = vettore_di_sottocartelle.iter()
+                        .map(|cartella| PathSelezionabile::new(cartella, false)) //  map =  converte, elemento per elemento
+                        .collect::<Vec<PathSelezionabile>>();
+                  }
                }
             }
          });
@@ -239,25 +245,24 @@ impl App for MyApp {
          //scrolla le pagine
          egui::scroll_area::ScrollArea::vertical().show(ui, |ui| {
 
+            //FOR PER LE CHECKBOX
             //ciclo per costruire i checkbox cartelle + evento selezionato checkbox
             let mut i = 0;
-            for mut my_bool in self.cartelle_selezionate.iter_mut().map(|ps| ps.selezionato) {
-               //assegno alla variabile il nome della cartella costruita +1
-               let my_cartella = format!("{}", 2008 + i);
+            for cartella in self.cartelle_selezionate.iter_mut() {
 
+               //assegno alla variabile il nome della cartella costruita +1
+               let my_cartella = &cartella.path.clone();
 
                ui.horizontal(|ui| {
                   //assegno alla checkbox il valore bool + il nome costruito
-                  let checkbox = ui.checkbox(&mut my_bool, &my_cartella);
+                  let checkbox = ui.checkbox(&mut cartella.selezionato, my_cartella);
 
                   //evento click checkbox
                   if checkbox.clicked() {
                      //stampo il nome ed il valore della check box cliccata.
-                     println!("Checkbox con indice {i} clicked, nome = {}", &my_cartella);
+                     println!("Checkbox con indice {i} clicked, nome = {}", my_cartella);
                   }
 
-                  ui.label("2008 prova");
-                  //aggiugno spazio
 
                });
 
@@ -274,9 +279,12 @@ impl App for MyApp {
          ui.add_space(10.0);
 
          ui.horizontal(|ui| {
-            ui.button("Comprimi Selezionati");
-            ui.button("Comprimi tutto");
-            ui.button("Esci");
+            let resp1 = ui.button("Comprimi Selezionati");
+            let resp2 = ui.button("Comprimi tutto");
+            let resp3 = ui.button("Esci");
+            if resp3.clicked() {
+               exit(0);
+            }
          });
          //....................................................................................//
 
