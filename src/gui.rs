@@ -37,8 +37,8 @@ use crate::file_dialog::{leggi_sottocartelle, scegli_cartella_pfn, scegli_file_p
 pub struct MyApp {
    //variabili central panel
    checkbox_tutti: bool,
-   cartelle_selezionate: Vec<PathSelezionabile>, // Stato delle checkbox (se selezionate o meno)
-   path_base: String,                            //la path selezionata
+   pub cartelle_selezionate: Vec<PathSelezionabile>, // Stato delle checkbox (se selezionate o meno)
+   pub path_base: String,                            //la path selezionata
    // pannello destro
    path_recenti: Vec<PathSelezionabile>,
    // pannello inferiore
@@ -46,6 +46,8 @@ pub struct MyApp {
    // pannello sinistro
    elenco_inclusi: Vec<String>,
    radio_file_recenti: Vec<bool>,
+   //messaggi
+   messaggi:String,
 
    // pannello superiore
    //colori tema
@@ -72,7 +74,7 @@ impl Default for MyApp {
          //i due vettori elenco inclusi + radio impostati a false
          elenco_inclusi: vec!["prova".to_string(), "prova2".to_string()],
          radio_file_recenti: vec![false],
-
+         messaggi: "Pronto".to_string(),
          //theme = 1) colore default Light + 2) colore Dark 3) system  = non funzionante.
          theme_preference: ThemePreference::Light,
          system_theme: Some(Theme::Dark),
@@ -234,11 +236,48 @@ impl App for MyApp {
                      /* conveto il vettore di stringhe sottocartelle in un vettore di PathSelezionabile */
                      self.cartelle_selezionate = vettore_di_sottocartelle.iter()
                         .map(|cartella| PathSelezionabile::new(cartella, false)) //  map =  converte, elemento per elemento
+                        .filter(|p| !p.path.contains("AA_SALVATAGGI"))
                         .collect::<Vec<PathSelezionabile>>();
                   }
                }
             }
          });
+
+         //3 button
+         //....................................................................................//
+         ui.add_space(10.0);
+
+         ui.horizontal(|ui| {
+            //CREA IL BUTTON = lo visualizza + ASSEGNA LA STRUCT RESPONSE a let resp1
+            let resp1 = ui.button("Comprimi Selezionati");
+            if resp1.clicked() {
+
+               let messaggi = self.comprimi_selezionati();
+               let mut str = String::new();
+               for messaggio in messaggi.iter() {
+                  str = str + messaggio + "\n";
+               }
+               self.messaggi = str;
+            }
+
+            let resp2 = ui.button("Comprimi tutto");
+            if resp2.clicked() {
+               let messaggi =self.comprimi_tutti();
+               let mut str = String::new();
+               for messaggio in messaggi.iter() {
+                  str = str + messaggio + "\n";
+               }
+               self.messaggi = str;
+            }
+            let resp3 = ui.button("Esci");
+            if resp3.clicked() {
+               exit(0);
+            }
+         });
+
+         ui.label(&self.messaggi);
+         //....................................................................................//
+         ui.add_space(10.0);
 
          //CREO LE CHECK BOX
          //....................................................................................//
@@ -274,20 +313,6 @@ impl App for MyApp {
          //SOSPESO=tutto lo spazio disponibile in altezza  -10
          //ui.add_space(ui.available_height() - 60.0);
 
-         //3 button
-         //....................................................................................//
-         ui.add_space(10.0);
-
-         ui.horizontal(|ui| {
-            let resp1 = ui.button("Comprimi Selezionati");
-            let resp2 = ui.button("Comprimi tutto");
-            let resp3 = ui.button("Esci");
-            if resp3.clicked() {
-               exit(0);
-            }
-         });
-         //....................................................................................//
-
          // TODO: crea un for per le check box e che riportano il nome dell cartelle nelle label
       }); //egui::CentralPanel
       // ==============================================================================================================//
@@ -306,8 +331,8 @@ impl App for MyApp {
 //**********************************************************************************************************************//
 #[derive(Clone)]
 pub struct PathSelezionabile {
-   selezionato: bool,
-   path: String,
+   pub selezionato: bool,
+   pub path: String,
 }
 
 impl PathSelezionabile {

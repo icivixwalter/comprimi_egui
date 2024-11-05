@@ -1,5 +1,6 @@
 mod gui;
 mod file_dialog;
+mod comprimi;
 
 use crate::gui::MyApp;
 use eframe::egui;
